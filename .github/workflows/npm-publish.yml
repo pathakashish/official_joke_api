@@ -1,0 +1,28 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+
+name: Node.js Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.17.1
+      - run: npm ci
+      - run: npm test
+      - name: Build the docker image
+        run: docker build --iidfile image.txt -t registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web:${GITHUB_SHA} .
+      - name: Login to the docker registry
+        run: docker login --username=_ --password=${{ secrets.HEROKU_TOKEN }} registry.heroku.com
+      - name: Push the docker image to heroku registry
+        run: docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web:${GITHUB_SHA}
+      - name: Start the container
+        run: |
+          curl -X PATCH https://api.heroku.com/apps/${{ secrets.HEROKU_APP_NAME }}/formation --header "Content-Type: application/json" --header "Accept: application/vnd.heroku+json; version=3.docker-releases" --header "Authorization: Bearer ${{ secrets.HEROKU_TOKEN }}" --data '{ "updates": [ { "type": "web", "docker_image": "'$(cat image.txt)'" } ] }'
