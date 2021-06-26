@@ -47,4 +47,4 @@ Submit a Pull Request, with your joke added to the jokes/index.json file. Make s
 ### Run Locally
 * Clone the repo
 * `npm i && npm run dev`
-* Visit `localhost:3005/jokes/random` or `localhost:3005/jokes/ten` on your browser!
+* Visit `localhost:8888/jokes/random` or `localhost:8888/jokes/ten` on your browser!
